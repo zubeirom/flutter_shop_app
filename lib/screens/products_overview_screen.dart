@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_shop_app/providers/products.dart';
-import 'package:provider/provider.dart';
 import '../widgets/products_grid.dart';
 
 enum FilterOptions {
