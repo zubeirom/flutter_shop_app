@@ -37,7 +37,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   void didChangeDependencies() {
     if (_isInit) {
       final productId = ModalRoute.of(context).settings.arguments as String;
-      if (productId.isNotEmpty) {
+      if (productId != null && productId.isNotEmpty) {
         _editedProduct =
             Provider.of<Products>(context, listen: false).findById(productId);
         _initValues = {
@@ -57,7 +57,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
       _form.currentState.save();
     }
 
-    _editedProduct.id.isNotEmpty
+    (_editedProduct.id != null && _editedProduct.id.isNotEmpty)
         ? Provider.of<Products>(context, listen: false)
             .editProduct(_editedProduct.id, _editedProduct)
         : Provider.of<Products>(context, listen: false)
