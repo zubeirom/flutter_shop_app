@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'product.dart';
 
 class Products with ChangeNotifier {
+  static const URL =
+      'https://fluttershop-ccabd-default-rtdb.europe-west1.firebasedatabase.app/products.json';
+
   List<Product> _items = [
     Product(
       id: 'p1',
@@ -47,26 +52,32 @@ class Products with ChangeNotifier {
     return _items.where((prodItem) => prodItem.isFavorite).toList();
   }
 
-  // void showFavoritesOnly() {
-  //   _showFavoritesOnly = true;
-  //   notifyListeners();
-  // }
-
-  // void showAll() {
-  //   _showFavoritesOnly = false;
-  //   notifyListeners();
-  // }
-
-  void addProduct(Product product) {
-    final newProduct = Product(
-      title: product.title,
-      description: product.description,
-      imageUrl: product.imageUrl,
-      price: product.price,
-      id: DateTime.now().toString(),
-    );
-    _items.add(newProduct);
-    notifyListeners();
+  Future<void> addProduct(Product product) async {
+    try {
+      final res = await http.post(
+        Products.URL,
+        body: json.encode(
+          {
+            'title': product.title,
+            'description': product.description,
+            'imageUrl': product.imageUrl,
+            'price': product.price,
+            'isFavorite': product.isFavorite
+          },
+        ),
+      );
+      final newProduct = Product(
+        title: product.title,
+        description: product.description,
+        imageUrl: product.imageUrl,
+        price: product.price,
+        id: json.decode(res.body)['name'],
+      );
+      _items.add(newProduct);
+      notifyListeners();
+    } catch (e) {
+      throw e;
+    }
   }
 
   void editProduct(String id, Product product) {
