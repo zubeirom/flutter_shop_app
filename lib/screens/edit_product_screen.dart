@@ -53,7 +53,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     super.didChangeDependencies();
   }
 
-  void _saveForm() {
+  void _saveForm() async {
     try {
       setState(() {
         _isLoading = true;
@@ -63,9 +63,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
       }
 
       (_editedProduct.id != null && _editedProduct.id.isNotEmpty)
-          ? Provider.of<Products>(context, listen: false)
+          ? await Provider.of<Products>(context, listen: false)
               .editProduct(_editedProduct.id, _editedProduct)
-          : Provider.of<Products>(context, listen: false)
+              .then((_) {
+              Navigator.of(context).pop();
+            })
+          : await Provider.of<Products>(context, listen: false)
               .addProduct(_editedProduct)
               .then((_) {
               Navigator.of(context).pop();
