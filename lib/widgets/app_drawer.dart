@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_shop_app/screens/orders_screen.dart';
-import 'package:flutter_shop_app/screens/products_overview_screen.dart';
-import 'package:flutter_shop_app/screens/user_products_screen.dart';
+
+import '../screens/orders_screen.dart';
+import '../screens/user_products_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
       child: Column(
-        children: [
+        children: <Widget>[
           AppBar(
             title: Text('Hello Friend!'),
             automaticallyImplyLeading: false,
@@ -18,8 +18,7 @@ class AppDrawer extends StatelessWidget {
             leading: Icon(Icons.shop),
             title: Text('Shop'),
             onTap: () {
-              Navigator.of(context)
-                  .pushReplacementNamed(ProductsOverviewScreen.routeName);
+              Navigator.of(context).pushReplacementNamed('/');
             },
           ),
           Divider(),
@@ -39,7 +38,7 @@ class AppDrawer extends StatelessWidget {
               Navigator.of(context)
                   .pushReplacementNamed(UserProductsScreen.routeName);
             },
-          )
+          ),
         ],
       ),
     );

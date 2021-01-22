@@ -1,15 +1,12 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+
 import 'package:flutter/material.dart';
-import 'product.dart';
+import 'package:http/http.dart' as http;
+
+import '../models/http_exception.dart';
+import './product.dart';
 
 class Products with ChangeNotifier {
-  static const URL =
-      'https://fluttershop-ccabd-default-rtdb.europe-west1.firebasedatabase.app/products.json';
-
-  static const DB_URL =
-      'https://fluttershop-ccabd-default-rtdb.europe-west1.firebasedatabase.app';
-
   List<Product> _items = [
     // Product(
     //   id: 'p1',
@@ -44,10 +41,12 @@ class Products with ChangeNotifier {
     //       'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cast-Iron-Pan.jpg/1024px-Cast-Iron-Pan.jpg',
     // ),
   ];
-
-  var _showFavoritesOnly = false;
+  // var _showFavoritesOnly = false;
 
   List<Product> get items {
+    // if (_showFavoritesOnly) {
+    //   return _items.where((prodItem) => prodItem.isFavorite).toList();
+    // }
     return [..._items];
   }
 
@@ -55,92 +54,109 @@ class Products with ChangeNotifier {
     return _items.where((prodItem) => prodItem.isFavorite).toList();
   }
 
+  Product findById(String id) {
+    return _items.firstWhere((prod) => prod.id == id);
+  }
+
+  // void showFavoritesOnly() {
+  //   _showFavoritesOnly = true;
+  //   notifyListeners();
+  // }
+
+  // void showAll() {
+  //   _showFavoritesOnly = false;
+  //   notifyListeners();
+  // }
+
   Future<void> fetchAndSetProducts() async {
+    const url =
+        'https://fluttershop-ccabd-default-rtdb.europe-west1.firebasedatabase.app/products.json';
     try {
-      final res = await http.get(Products.URL);
-      final data = json.decode(res.body) as Map<String, dynamic>;
+      final response = await http.get(url);
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+      if (extractedData == null) {
+        return;
+      }
       final List<Product> loadedProducts = [];
-      data.forEach((id, product) {
-        loadedProducts.add(
-          Product(
-            id: id,
-            title: product['title'],
-            description: product['description'],
-            imageUrl: product['imageUrl'],
-            price: product['price'],
-            isFavorite: product['isFavorite'],
-          ),
-        );
+      extractedData.forEach((prodId, prodData) {
+        loadedProducts.add(Product(
+          id: prodId,
+          title: prodData['title'],
+          description: prodData['description'],
+          price: prodData['price'],
+          isFavorite: prodData['isFavorite'],
+          imageUrl: prodData['imageUrl'],
+        ));
       });
       _items = loadedProducts;
       notifyListeners();
-    } catch (e) {
-      throw e;
+    } catch (error) {
+      throw (error);
     }
   }
 
   Future<void> addProduct(Product product) async {
+    const url =
+        'https://fluttershop-ccabd-default-rtdb.europe-west1.firebasedatabase.app/products.json';
     try {
-      final res = await http.post(
-        Products.URL,
-        body: json.encode(
-          {
-            'title': product.title,
-            'description': product.description,
-            'imageUrl': product.imageUrl,
-            'price': product.price,
-            'isFavorite': product.isFavorite
-          },
-        ),
+      final response = await http.post(
+        url,
+        body: json.encode({
+          'title': product.title,
+          'description': product.description,
+          'imageUrl': product.imageUrl,
+          'price': product.price,
+          'isFavorite': product.isFavorite,
+        }),
       );
       final newProduct = Product(
         title: product.title,
         description: product.description,
-        imageUrl: product.imageUrl,
         price: product.price,
-        id: json.decode(res.body)['name'],
+        imageUrl: product.imageUrl,
+        id: json.decode(response.body)['name'],
       );
       _items.add(newProduct);
+      // _items.insert(0, newProduct); // at the start of the list
       notifyListeners();
-    } catch (e) {
-      throw e;
+    } catch (error) {
+      print(error);
+      throw error;
     }
   }
 
-  Future<void> editProduct(String id, Product product) async {
-    try {
-      final prodIndex = _items.indexWhere((prod) => prod.id == id);
-      if (prodIndex >= 0) {
-        await http.patch(
-          '$DB_URL/products/$id.json',
-          body: json.encode(
-            {
-              'title': product.title,
-              'description': product.description,
-              'imageUrl': product.imageUrl,
-              'price': product.price
-            },
-          ),
-        );
-        _items[prodIndex] = product;
-        notifyListeners();
-      }
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  Product findById(String id) {
-    return _items.firstWhere((product) => product.id == id);
-  }
-
-  Future<void> deleteItem(String id) async {
-    try {
-      await http.delete('$DB_URL/products/$id.json');
-      _items.removeWhere((prod) => prod.id == id);
+  Future<void> updateProduct(String id, Product newProduct) async {
+    final prodIndex = _items.indexWhere((prod) => prod.id == id);
+    if (prodIndex >= 0) {
+      final url =
+          'https://fluttershop-ccabd-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json';
+      await http.patch(url,
+          body: json.encode({
+            'title': newProduct.title,
+            'description': newProduct.description,
+            'imageUrl': newProduct.imageUrl,
+            'price': newProduct.price
+          }));
+      _items[prodIndex] = newProduct;
       notifyListeners();
-    } catch (e) {
-      print(e);
+    } else {
+      print('...');
     }
+  }
+
+  Future<void> deleteProduct(String id) async {
+    final url =
+        'https://fluttershop-ccabd-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json';
+    final existingProductIndex = _items.indexWhere((prod) => prod.id == id);
+    var existingProduct = _items[existingProductIndex];
+    _items.removeAt(existingProductIndex);
+    notifyListeners();
+    final response = await http.delete(url);
+    if (response.statusCode >= 400) {
+      _items.insert(existingProductIndex, existingProduct);
+      notifyListeners();
+      throw HttpException('Could not delete product.');
+    }
+    existingProduct = null;
   }
 }

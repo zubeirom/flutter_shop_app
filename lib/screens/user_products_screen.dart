@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_shop_app/widgets/app_drawer.dart';
-import 'package:flutter_shop_app/widgets/user_product_item.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/products.dart';
-import 'edit_product_screen.dart';
+import '../widgets/user_product_item.dart';
+import '../widgets/app_drawer.dart';
+import './edit_product_screen.dart';
 
 class UserProductsScreen extends StatelessWidget {
-  static const routeName = '/user-product';
+  static const routeName = '/user-products';
+
   Future<void> _refreshProducts(BuildContext context) async {
     await Provider.of<Products>(context, listen: false).fetchAndSetProducts();
   }
@@ -14,11 +16,10 @@ class UserProductsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final productsData = Provider.of<Products>(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your products'),
-        actions: [
+        title: const Text('Your Products'),
+        actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -30,14 +31,17 @@ class UserProductsScreen extends StatelessWidget {
       drawer: AppDrawer(),
       body: RefreshIndicator(
         onRefresh: () => _refreshProducts(context),
-        strokeWidth: 2,
         child: Padding(
           padding: EdgeInsets.all(8),
           child: ListView.builder(
             itemCount: productsData.items.length,
-            itemBuilder: (_, index) => Column(
+            itemBuilder: (_, i) => Column(
               children: [
-                UserProductItem(productsData.items[index]),
+                UserProductItem(
+                  productsData.items[i].id,
+                  productsData.items[i].title,
+                  productsData.items[i].imageUrl,
+                ),
                 Divider(),
               ],
             ),
